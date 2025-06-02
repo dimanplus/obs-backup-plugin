@@ -102,7 +102,11 @@ build() {
 
   if (( debug )) cmake_args+=(--debug-output)
 
-  cmake_args+=(--preset 'macos-ci')
+  cmake_args+=(
+    --preset 'macos-ci'
+    -DCMAKE_VERBOSE_MAKEFILE=ON
+    -DOBS_FETCH_CONTENT=ON
+  )
 
   typeset -gx NSUnbufferedIO=YES
 
