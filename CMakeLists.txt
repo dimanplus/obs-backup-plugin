@@ -46,9 +46,5 @@ target_sources(${CMAKE_PROJECT_NAME}
     src/test.cpp
 )
 
-if(NOT DEFINED TREAT_WARNINGS_AS_ERRORS)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-error")
-endif()
-
 # Set plugin output name
 set_target_properties_plugin(${CMAKE_PROJECT_NAME} PROPERTIES OUTPUT_NAME ${_name})
