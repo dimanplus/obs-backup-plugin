@@ -25,7 +25,7 @@ jobs:
     permissions:
       contents: read
 
-  create-release:
+    create-release:
     name: Create Release 🛫
     if: github.ref_type == 'tag'
     runs-on: ubuntu-24.04
@@ -37,10 +37,7 @@ jobs:
       - name: Check Release Tag ☑️
         id: check
         run: |
-          : Check Release Tag ☑️
-          if [[ "${RUNNER_DEBUG}" ]]; then set -x; fi
           shopt -s extglob
-
           case "${GITHUB_REF_NAME}" in
             +([0-9]).+([0-9]).+([0-9]) )
               echo 'validTag=true' >> $GITHUB_OUTPUT
@@ -55,65 +52,69 @@ jobs:
             *) echo 'validTag=false' >> $GITHUB_OUTPUT ;;
           esac
 
-      - name: Download Build Artifacts 📥
-        uses: actions/download-artifact@v4
+      # --- Скачиваем артефакты по именам, которые совпадают с upload из билдов ---
+      - name: Download Windows Artifacts 📥
         if: fromJSON(steps.check.outputs.validTag)
-        id: download
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build-project.outputs.pluginName }}-${{ needs.build-project.outputs.pluginVersion }}-windows-x64-${{ needs.build-project.outputs.commitHash }}
+          path: ./artifacts/windows
 
-      - name: Rename Files 🏷️
+      - name: Download macOS Artifacts 📥
+        if: fromJSON(steps.check.outputs.validTag)
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build-project.outputs.pluginName }}-${{ needs.build-project.outputs.pluginVersion }}-macos-universal-${{ needs.build-project.outputs.commitHash }}
+          path: ./artifacts/macos
+
+      - name: Download Linux Artifacts 📥
+        if: fromJSON(steps.check.outputs.validTag)
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build-project.outputs.pluginName }}-${{ needs.build-project.outputs.pluginVersion }}-ubuntu-24.04-x86_64-${{ needs.build-project.outputs.commitHash }}
+          path: ./artifacts/linux
+
+      - name: Download Sources 📥
+        if: fromJSON(steps.check.outputs.validTag)
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build-project.outputs.pluginName }}-${{ needs.build-project.outputs.pluginVersion }}-sources-${{ needs.build-project.outputs.commitHash }}
+          path: ./artifacts/sources
+
+      # Перемещаем все артефакты в корень для удобства создания релиза
+      - name: Collect All Artifacts 🏷️
         if: fromJSON(steps.check.outputs.validTag)
         run: |
-          : Rename Files 🏷️
-          if [[ "${RUNNER_DEBUG}" ]]; then set -x; fi
-          shopt -s extglob
           shopt -s nullglob
-
-          root_dir="$(pwd)"
-          commit_hash="${GITHUB_SHA:0:9}"
-
-          variants=(
-            'windows-x64;zip|exe'
-            'macos-universal;tar.xz|pkg'
-            'ubuntu-24.04-x86_64;tar.xz|deb|ddeb'
-            'sources;tar.xz'
-          )
-
-          for variant_data in "${variants[@]}"; do
-            IFS=';' read -r variant suffix <<< "${variant_data}"
-
-            candidates=(*-${variant}-${commit_hash}/@(*|*-dbgsym).@(${suffix}))
-
-            for candidate in "${candidates[@]}"; do
-              mv "${candidate}" "${root_dir}"
-            done
+          for dir in ./artifacts/*; do
+            mv "$dir"/* .
           done
 
+      # Генерируем контрольные суммы
       - name: Generate Checksums 🪪
         if: fromJSON(steps.check.outputs.validTag)
         run: |
-          : Generate Checksums 🪪
-          if [[ "${RUNNER_DEBUG}" ]]; then set -x; fi
-          shopt -s extglob
-
-          echo "### Checksums" > ${{ github.workspace }}/CHECKSUMS.txt
-          for file in ${{ github.workspace }}/@(*.exe|*.deb|*.ddeb|*.pkg|*.tar.xz|*.zip); do
-            echo "    ${file##*/}: $(sha256sum "${file}" | cut -d " " -f 1)" >> ${{ github.workspace }}/CHECKSUMS.txt
+          echo "### Checksums" > CHECKSUMS.txt
+          for file in *.{exe,deb,ddeb,pkg,tar.xz,zip}; do
+            if [[ -f "$file" ]]; then
+              echo "    $file: $(sha256sum "$file" | cut -d ' ' -f 1)" >> CHECKSUMS.txt
+            fi
           done
 
       - name: Create Release 🛫
         if: fromJSON(steps.check.outputs.validTag)
         id: create_release
-        uses: softprops/action-gh-release@9d7c94cfd0a1f3ed45544c887983e9fa900f0564
+        uses: softprops/action-gh-release@v9
         with:
           draft: true
           prerelease: ${{ fromJSON(steps.check.outputs.prerelease) }}
           tag_name: ${{ steps.check.outputs.version }}
           name: ${{ needs.build-project.outputs.pluginName }} ${{ steps.check.outputs.version }}
-          body_path: ${{ github.workspace }}/CHECKSUMS.txt
+          body_path: CHECKSUMS.txt
           files: |
-            ${{ github.workspace }}/*.exe
-            ${{ github.workspace }}/*.zip
-            ${{ github.workspace }}/*.pkg
-            ${{ github.workspace }}/*.deb
-            ${{ github.workspace }}/*.ddeb
-            ${{ github.workspace }}/*.tar.xz
+            *.exe
+            *.zip
+            *.pkg
+            *.deb
+            *.ddeb
+            *.tar.xz
