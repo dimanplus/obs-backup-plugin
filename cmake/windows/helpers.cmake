@@ -22,12 +22,12 @@ function(set_target_properties_plugin target)
 
   set_target_properties(${target} PROPERTIES VERSION 0 SOVERSION ${PLUGIN_VERSION})
 
-  install(TARGETS ${target} RUNTIME DESTINATION "${target}/bin/64bit" LIBRARY DESTINATION "${target}/bin/64bit")
+  install(TARGETS ${target} RUNTIME DESTINATION "${target}/obs-plugins/64bit" LIBRARY DESTINATION "${target}/obs-plugins/64bit")
 
   install(
     FILES "$<TARGET_PDB_FILE:${target}>"
     CONFIGURATIONS RelWithDebInfo Debug Release
-    DESTINATION "${target}/bin/64bit"
+    DESTINATION "${target}/obs-plugins/64bit"
     OPTIONAL
   )
 
@@ -94,7 +94,7 @@ endfunction()
 function(target_add_resource target resource)
   message(DEBUG "Add resource '${resource}' to target ${target} at destination '${target_destination}'...")
 
-  install(FILES "${resource}" DESTINATION "${target}/data" COMPONENT Runtime)
+  install(FILES "${resource}" DESTINATION "${target}/data/obs-plugins/${target}" COMPONENT Runtime)
 
   add_custom_command(
     TARGET ${target}
