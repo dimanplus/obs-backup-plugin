@@ -103,9 +103,8 @@ build() {
   if (( debug )) cmake_args+=(--debug-output)
 
   cmake_args+=(--preset 'macos-ci')
-  MACOS_SDK_VERSION=$(xcrun --sdk macosx --show-sdk-version)
   cmake_args+=(
-    -DMACOSX_SDK_VERSION=${MACOS_SDK_VERSION}
+    -DMACOSX_SDK_VERSION=14.2
   )
 
   typeset -gx NSUnbufferedIO=YES
