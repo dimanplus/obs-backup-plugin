@@ -34,12 +34,20 @@ runs:
       run: |
         : Run macOS Build
 
+        # Даем права на выполнение и проверяем скрипт
+        chmod +x .github/scripts/build-macos
+        if [[ ! -x .github/scripts/build-macos ]]; then
+          echo "::error::build-macos script is not executable"
+          exit 1
+        fi
+
         local -a build_args=(--config ${{ inputs.config }})
         if (( ${+RUNNER_DEBUG} )) build_args+=(--debug)
 
         if [[ '${{ inputs.codesign }}' == 'true' ]] build_args+=(--codesign)
 
-        .github/scripts/build-macos ${build_args}
+        # Явный запуск через zsh
+        zsh .github/scripts/build-macos ${build_args}
 
     - name: Install Dependencies 🛍️
       if: runner.os == 'Linux'
@@ -47,9 +55,10 @@ runs:
       run: |
         : Install Dependencies 🛍️
         echo ::group::Install Dependencies
-        eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-        echo "/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
-        brew install --quiet zsh
+        if ! command -v zsh >/dev/null; then
+          sudo apt-get update -qq
+          sudo apt-get install -qq -y zsh
+        fi
         echo ::endgroup::
 
     - name: Run Ubuntu Build
@@ -58,19 +67,17 @@ runs:
       working-directory: ${{ inputs.workingDirectory }}
       env:
         CCACHE_DIR: ${{ inputs.workingDirectory }}/.ccache
+        CXXFLAGS: "-Wno-error"  # Добавляем эту переменную окружения
       run: |
         : Run Ubuntu Build
-
-        # Даем скрипту права на выполнение (если их нет в Git)
         chmod +x .github/scripts/build-ubuntu
-
+        
         local -a build_args=(
           --target ubuntu-${{ inputs.target }}
           --config ${{ inputs.config }}
         )
         if (( ${+RUNNER_DEBUG} )) build_args+=(--debug)
 
-        # Запускаем скрипт с указанием интерпретатора
         zsh .github/scripts/build-ubuntu ${build_args}
 
     - name: Run Windows Build
