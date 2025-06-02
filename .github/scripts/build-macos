@@ -116,7 +116,7 @@ build() {
   }
 
   log_group "Configuring ${product_name}..."
-  cmake -S ${project_root} ${cmake_args}
+  cmake -S ${project_root} ${cmake_args} || { echo "CMake failed"; exit 2; }
 
   log_group "Building ${product_name}..."
   run_xcodebuild() {
