@@ -61,13 +61,17 @@ runs:
       run: |
         : Run Ubuntu Build
 
+        # Даем скрипту права на выполнение (если их нет в Git)
+        chmod +x .github/scripts/build-ubuntu
+
         local -a build_args=(
           --target ubuntu-${{ inputs.target }}
           --config ${{ inputs.config }}
         )
         if (( ${+RUNNER_DEBUG} )) build_args+=(--debug)
 
-        .github/scripts/build-ubuntu ${build_args}
+        # Запускаем скрипт с указанием интерпретатора
+        zsh .github/scripts/build-ubuntu ${build_args}
 
     - name: Run Windows Build
       if: runner.os == 'Windows'
