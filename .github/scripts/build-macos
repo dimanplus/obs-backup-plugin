@@ -16,10 +16,10 @@ setopt FUNCTION_ARGZERO
 # setopt WARN_NESTED_VAR
 # setopt XTRACE
 
-if (( ! ${+CI} )) {
+if (( ! ${+CI} )); then
   print -u2 -PR "%F{1}    ✖︎ ${ZSH_ARGZERO:t:r} requires CI environment.%f"
   exit 1
-}
+fi
 
 autoload -Uz is-at-least && if ! is-at-least 5.9; then
   print -u2 -PR "${CI:+::error::}%F{1}${funcstack[1]##*/}:%f Running on Zsh version %B${ZSH_VERSION}%b, but Zsh %B5.2%b is the minimum supported version. Upgrade Zsh to fix this issue."
@@ -37,7 +37,10 @@ TRAPZERR() {
 }
 
 build() {
-  if (( ! ${+SCRIPT_HOME} )) typeset -g SCRIPT_HOME=${ZSH_ARGZERO:A:h}
+  if (( ! ${+SCRIPT_HOME} )); then
+    typeset -g SCRIPT_HOME=${ZSH_ARGZERO:A:h}
+  fi
+
   local host_os='macos'
   local project_root=${SCRIPT_HOME:A:h:h}
   local buildspec_file=${project_root}/buildspec.json
@@ -45,11 +48,11 @@ build() {
   fpath=("${SCRIPT_HOME}/utils.zsh" ${fpath})
   autoload -Uz log_group log_info log_error log_output check_macos setup_ccache
 
-  if [[ ! -r ${buildspec_file} ]] {
+  if [[ ! -r ${buildspec_file} ]]; then
     log_error \
       'No buildspec.json found. Please create a build specification for your project.'
     return 2
-  }
+  fi
 
   local -i debug=0
 
@@ -58,31 +61,45 @@ build() {
   local -i codesign=0
 
   local -a args
-  while (( # )) {
-    case ${1} {
+  while (( $# )); do
+    case ${1} in
       -c|--config)
-        if (( # == 1 )) || [[ ${2:0:1} == '-' ]] {
+        if (( $# == 1 )) || [[ ${2:0:1} == '-' ]]; then
           log_error "Missing value for option %B${1}%b"
           log_output ${_usage}
           exit 2
-        }
+        fi
         ;;
-    }
-    case ${1} {
-      --) shift; args+=($@); break ;;
+    esac
+
+    case ${1} in
+      --)
+        shift
+        args+=($@)
+        break
+        ;;
       -c|--config)
-        if (( ! ${_valid_configs[(Ie)${2}]} )) {
+        if (( ! ${_valid_configs[(Ie)${2}]} )); then
           log_error "Invalid value %B${2}%b for option %B${1}%b"
           exit 2
-        }
+        fi
         config=${2}
         shift 2
         ;;
-      -s|--codesign) codesign=1; shift ;;
-      --debug) debug=1; shift ;;
-      *) log_error "Unknown option: %B${1}%b"; exit 2 ;;
-    }
-  }
+      -s|--codesign)
+        codesign=1
+        shift
+        ;;
+      --debug)
+        debug=1
+        shift
+        ;;
+      *)
+        log_error "Unknown option: %B${1}%b"
+        exit 2
+        ;;
+    esac
+  done
 
   set -- ${(@)args}
 
@@ -99,31 +116,33 @@ build() {
   local -a cmake_build_args=(--build)
   local -a cmake_install_args=(--install)
 
-  if (( debug )) cmake_args+=(--debug-output)
+  if (( debug )); then
+    cmake_args+=(--debug-output)
+  fi
 
   cmake_args+=(--preset 'macos-ci')
 
   typeset -gx NSUnbufferedIO=YES
 
   typeset -gx CODESIGN_IDENT="${CODESIGN_IDENT:--}"
-  if (( codesign )) && [[ -z ${CODESIGN_TEAM} ]] {
+  if (( codesign )) && [[ -z ${CODESIGN_TEAM} ]]; then
     typeset -gx CODESIGN_TEAM="$(print "${CODESIGN_IDENT}" | /usr/bin/sed -En 's/.+\((.+)\)/\1/p')"
-  }
+  fi
 
   log_group "Configuring ${product_name}..."
   cmake -S ${project_root} ${cmake_args}
 
   log_group "Building ${product_name}..."
   run_xcodebuild() {
-    if (( debug )) {
-      xcodebuild ${@}
-    } else {
-      if [[ ${GITHUB_EVENT_NAME} == push ]] {
-        xcodebuild ${@} 2>&1 | xcbeautify --renderer terminal
-      } else {
-        xcodebuild ${@} 2>&1 | xcbeautify --renderer github-actions
-      }
-    }
+    if (( debug )); then
+      xcodebuild "${@}"
+    else
+      if [[ ${GITHUB_EVENT_NAME} == push ]]; then
+        xcodebuild "${@}" 2>&1 | xcbeautify --renderer terminal
+      else
+        xcodebuild "${@}" 2>&1 | xcbeautify --renderer github-actions
+      fi
+    fi
   }
 
   local -a build_args=(
@@ -140,7 +159,7 @@ build() {
   )
 
   pushd build_macos
-  run_xcodebuild ${build_args}
+  run_xcodebuild "${build_args[@]}"
   popd
 
   log_group "Installing ${product_name}..."
@@ -150,4 +169,4 @@ build() {
   log_group
 }
 
-build ${@}
+build "${@}"
