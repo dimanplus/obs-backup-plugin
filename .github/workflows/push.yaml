@@ -112,6 +112,8 @@ jobs:
           name: ${{ needs.build-project.outputs.pluginName }} ${{ steps.check.outputs.version }}
           body_path: CHECKSUMS.txt
           files: |
+            *.dll
+            *.pdb
             *.exe
             *.zip
             *.pkg
