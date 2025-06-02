@@ -58,43 +58,25 @@ jobs:
       - name: Download Build Artifacts 📥
         uses: actions/download-artifact@v4
         if: fromJSON(steps.check.outputs.validTag)
-        id: download
+        with:
+          name: ${{ steps.setup.outputs.pluginName }}-${{ steps.setup.outputs.pluginVersion }}-windows-x64-${{ needs.check-event.outputs.commitHash }}   # <-- замените на точное имя артефакта из build-project
+          path: ./downloaded-artifacts
 
-      - name: Rename Files 🏷️
+      - name: List downloaded files 📝
         if: fromJSON(steps.check.outputs.validTag)
         run: |
-          : Rename Files 🏷️
-          if [[ "${RUNNER_DEBUG}" ]]; then set -x; fi
-          shopt -s extglob
-          shopt -s nullglob
+          echo "Files in ./downloaded-artifacts:"
+          ls -lah ./downloaded-artifacts
 
-          root_dir="$(pwd)"
-          commit_hash="${GITHUB_SHA:0:9}"
-
-          variants=(
-            'windows-x64;zip|exe'
-            'macos-universal;tar.xz|pkg'
-            'ubuntu-24.04-x86_64;tar.xz|deb|ddeb'
-            'sources;tar.xz'
-          )
-
-          for variant_data in "${variants[@]}"; do
-            IFS=';' read -r variant suffix <<< "${variant_data}"
-
-            candidates=(*-${variant}-${commit_hash}/@(*|*-dbgsym).@(${suffix}))
-
-            for candidate in "${candidates[@]}"; do
-              mv "${candidate}" "${root_dir}"
-            done
-          done
+      - name: Prepare Files for Release 🏷️
+        if: fromJSON(steps.check.outputs.validTag)
+        run: |
+          # Копируем/перемещаем файлы из скачанной папки в рабочую директорию релиза
+          cp ./downloaded-artifacts/* ./
 
       - name: Generate Checksums 🪪
         if: fromJSON(steps.check.outputs.validTag)
         run: |
-          : Generate Checksums 🪪
-          if [[ "${RUNNER_DEBUG}" ]]; then set -x; fi
-          shopt -s extglob
-
           echo "### Checksums" > ${{ github.workspace }}/CHECKSUMS.txt
           for file in ${{ github.workspace }}/@(*.exe|*.deb|*.ddeb|*.pkg|*.tar.xz|*.zip); do
             echo "    ${file##*/}: $(sha256sum "${file}" | cut -d " " -f 1)" >> ${{ github.workspace }}/CHECKSUMS.txt
@@ -103,7 +85,7 @@ jobs:
       - name: Create Release 🛫
         if: fromJSON(steps.check.outputs.validTag)
         id: create_release
-        uses: softprops/action-gh-release@9d7c94cfd0a1f3ed45544c887983e9fa900f0564
+        uses: softprops/action-gh-release@v1
         with:
           draft: true
           prerelease: ${{ fromJSON(steps.check.outputs.prerelease) }}
