@@ -26,8 +26,8 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
 )
 
 # Qt
-find_package(Qt6 REQUIRED COMPONENTS Widgets Core)
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::Core Qt6::Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Widgets Core Concurrent)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::Core Qt6::Widgets Qt6::Concurrent)
 target_compile_options(${CMAKE_PROJECT_NAME}
   PRIVATE
     $<$<C_COMPILER_ID:MSVC>:/wd4996>
