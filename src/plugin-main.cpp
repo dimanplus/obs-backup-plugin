@@ -79,13 +79,12 @@ bool obs_module_load(void)
 		dir.cdUp();
 		dir.cdUp();
 		QString obsPluginsPath = dir.absoluteFilePath("obs-plugins");
-		obs_log(LOG_INFO, "[%s] START_CREATE_BACKUP — obsPluginsPath : %s",
-            PLUGIN_NAME,
+		QString obsDataPath = dir.absoluteFilePath("data");
+		obs_log(LOG_INFO, "[%s] START_CREATE_BACKUP — obsPluginsPath : %s", PLUGIN_NAME,
 			obsPluginsPath.toStdString().c_str());
 
 		if (!QDir(obsPluginsPath).exists()) {
-			obs_log(LOG_ERROR, "[%s] Backup failed: obs-plugins folder not found at %s",
-                PLUGIN_NAME,
+			obs_log(LOG_ERROR, "[%s] Backup failed: obs-plugins folder not found at %s", PLUGIN_NAME,
 				obsPluginsPath.toStdString().c_str());
 			return;
 		}
@@ -96,7 +95,9 @@ bool obs_module_load(void)
 
 		QString tempPath = QStandardPaths::writableLocation(QStandardPaths::TempLocation);
 		QString tempRootCopyPath = tempPath + "/obs-plugins-backup"; // чистая папка
+
 		QString tempObsPluginsCopyPath = tempRootCopyPath + "/obs-plugins";
+		QString tempDataCopyPath = tempRootCopyPath + "/data";
 
 		// Запускаем копирование и архивирование в отдельном потоке
 		auto archive = QtConcurrent::run([=]() {
@@ -105,24 +106,33 @@ bool obs_module_load(void)
 
 			// Создаем папку obs-plugins внутри tempRootCopyPath
 			QDir().mkpath(tempObsPluginsCopyPath);
+			QDir().mkpath(tempDataCopyPath);
 
-			// Копируем содержимое obsPluginsPath в tempObsPluginsCopyPath через PowerShell
-			QString copyCmd =
+			// Копирование obs-plugins
+			QString copyPluginsCmd =
 				QString("Copy-Item -Path \"%1\\*\" -Destination \"%2\" -Recurse -ErrorAction SilentlyContinue")
 					.arg(obsPluginsPath, tempObsPluginsCopyPath);
 
-			QProcess copyProcess;
-			copyProcess.start("powershell", QStringList() << "-NoProfile" << "-Command" << copyCmd);
-			copyProcess.waitForFinished();
+			QProcess copyPlugins;
+			copyPlugins.start("powershell", QStringList() << "-NoProfile" << "-Command" << copyPluginsCmd);
+			copyPlugins.waitForFinished();
+
+			// Копирование data
+			QString copyDataCmd =
+				QString("Copy-Item -Path \"%1\\*\" -Destination \"%2\" -Recurse -ErrorAction SilentlyContinue")
+					.arg(obsDataPath, tempDataCopyPath);
+
+			QProcess copyData;
+			copyData.start("powershell", QStringList() << "-NoProfile" << "-Command" << copyDataCmd);
+			copyData.waitForFinished();
 
 			if (!QDir(tempObsPluginsCopyPath).exists()) {
-				obs_log(LOG_ERROR,
-					"[%s] Backup failed: could not copy obs-plugins to temp",
-                    PLUGIN_NAME);
+				obs_log(LOG_ERROR, "[%s] Backup failed: could not copy obs-plugins to temp",
+					PLUGIN_NAME);
 				return;
 			}
 
-			// Архивируем tempRootCopyPath — в архив попадет папка obs-plugins и её содержимое
+			// Архивация обеих папок
 			QString zipCmd = QString("Compress-Archive -Path \"%1\\*\" -DestinationPath \"%2\" -Force")
 						 .arg(tempRootCopyPath, zipPath);
 
@@ -137,28 +147,24 @@ bool obs_module_load(void)
 			// obs_log(LOG_ERROR, "[%s] PowerShell zip STDERR: %s", PLUGIN_NAME, stdErr.toStdString().c_str());
 
 			if (zipProcess.exitStatus() == QProcess::NormalExit && zipProcess.exitCode() == 0) {
-				obs_log(LOG_INFO,
-					"[%s] STOP_CREATE_BACKUP — Backup created successfully at: %s",
-                    PLUGIN_NAME,
+				obs_log(LOG_INFO, "[%s] STOP_CREATE_BACKUP — Backup created at: %s", PLUGIN_NAME,
 					zipPath.toStdString().c_str());
 
-				// Вызов GUI из главного потока - показать сообщение об успешном создании
+				// Вызов GUI в главном потоке
 				QMetaObject::invokeMethod(
 					QCoreApplication::instance(),
 					[zipPath]() {
-						QMessageBox::information(nullptr, obs_module_text("backup_title"),
-									 QString("%1\n%2")
-										 .arg(obs_module_text("backup_success"))
-										 .arg(zipPath));
+						QMessageBox::information(
+							nullptr, obs_module_text("backup_title"),
+							QString("%1\n%2").arg(obs_module_text("backup_success"),
+									      zipPath));
 					},
 					Qt::QueuedConnection);
-
 			} else {
-				obs_log(LOG_ERROR, "[%s] Backup creation failed",
-                PLUGIN_NAME);
+				obs_log(LOG_ERROR, "[%s] Backup creation failed", PLUGIN_NAME);
 			}
 
-			// Очистка временной копии
+			// Очистка временной директории
 			QDir(tempRootCopyPath).removeRecursively();
 		});
 	});
@@ -170,14 +176,12 @@ bool obs_module_load(void)
 								"ZIP Archives (*.zip);;All Files (*)");
 
 		if (filePath.isEmpty()) {
-			obs_log(LOG_INFO, "[%s] No backup file selected",
-            PLUGIN_NAME);
+			obs_log(LOG_INFO, "[%s] No backup file selected", PLUGIN_NAME);
 			return;
 		}
 
 		QString fileName = QFileInfo(filePath).fileName();
-		obs_log(LOG_INFO, "[%s] START_LOAD_BACKUP — Selected backup file: %s",
-            PLUGIN_NAME,
+		obs_log(LOG_INFO, "[%s] START_LOAD_BACKUP — Selected backup file: %s", PLUGIN_NAME,
 			filePath.toStdString().c_str());
 
 		QMetaObject::invokeMethod(
@@ -224,11 +228,10 @@ powershell -Command "Add-Type -AssemblyName PresentationFramework;[System.Window
 
 				QFile scriptFile(scriptPath);
 				if (!scriptFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
-					obs_log(LOG_ERROR, "[%s] Не удалось создать батник по пути %s",
-                        PLUGIN_NAME,
+					obs_log(LOG_ERROR, "[%s] Cant create BAT-file for script at path: %s.", PLUGIN_NAME,
 						scriptPath.toStdString().c_str());
 					QMessageBox::critical(nullptr, "Error",
-							      "Не удалось создать скрипт восстановления.");
+							      "Cant create BAT-file for script");
 					return;
 				}
 				scriptFile.write(scriptContent.toUtf8());
@@ -251,11 +254,10 @@ powershell -Command "Add-Type -AssemblyName PresentationFramework;[System.Window
 				if (!ShellExecuteExW(&sei)) {
 					DWORD err = GetLastError();
 					obs_log(LOG_ERROR,
-						"[%s] Не удалось запустить bat с правами администратора. Ошибка: %lu",
-                        PLUGIN_NAME,
-						err);
+						"[%s] Cant run BAT-file with ADMIN rights. Error: %lu",
+						PLUGIN_NAME, err);
 					QMessageBox::critical(nullptr, "Error",
-							      "Не удалось запустить скрипт с правами администратора.");
+							      "Cant run BAT-file with ADMIN rights.");
 					return;
 				}
 
@@ -272,9 +274,8 @@ powershell -Command "Add-Type -AssemblyName PresentationFramework;[System.Window
 				} else {
 					// Пользователь отменил, батник запущен — можно просто завершить (файл будет удалён системой позже)
 					// Либо оставить как есть — батник ждёт закрытия obs64.exe и не выполнится пока OBS не закроют
-					obs_log(LOG_INFO,
-						"[%s] USER cancelled restore, OBS will not be closed.", 
-                        PLUGIN_NAME);
+					obs_log(LOG_INFO, "[%s] USER cancelled restore, OBS will not be closed.",
+						PLUGIN_NAME);
 				}
 			},
 			Qt::QueuedConnection);
