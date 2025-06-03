@@ -3,8 +3,11 @@ on:
   workflow_call:
     outputs:
       pluginName:
-        description: Project name detected by parsing build spec file
-        value: ${{ jobs.check-event.outputs.pluginName }}
+        description: 'Plugin name'
+        value: ${{ jobs.windows-build.outputs.pluginName }}
+      pluginVersion:
+        description: 'Plugin version'
+        value: ${{ jobs.windows-build.outputs.pluginVersion }}
 jobs:
   check-event:
     name: Check GitHub Event Data 🔎

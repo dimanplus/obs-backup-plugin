@@ -25,9 +25,6 @@ jobs:
     secrets: inherit
     permissions:
       contents: read
-    outputs:
-      pluginName: ${{ jobs.windows-build.outputs.pluginName }}
-      pluginVersion: ${{ jobs.windows-build.outputs.pluginVersion }}
 
   create-release:
     name: Create Release 🛫
