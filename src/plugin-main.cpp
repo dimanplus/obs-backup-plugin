@@ -79,7 +79,8 @@ bool obs_module_load(void)
 		dir.cdUp();
 		dir.cdUp();
 		QString obsPluginsPath = dir.absoluteFilePath("obs-plugins");
-		obs_log(LOG_INFO, "[FU-test-plugin] START_CREATE_BACKUP — obsPluginsPath : %s",
+		obs_log(LOG_INFO, "[%s] START_CREATE_BACKUP — obsPluginsPath : %s",
+            PLUGIN_NAME,
 			obsPluginsPath.toStdString().c_str());
 
 		if (!QDir(obsPluginsPath).exists()) {

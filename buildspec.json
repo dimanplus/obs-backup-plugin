@@ -36,10 +36,10 @@
             "bundleId": "com.example.plugintemplate-for-obs"
         }
     },
-    "name": "FU-test-plugin",
-    "displayName": "Plugin Template for OBS",
+    "name": "FU-backup-plugin",
+    "displayName": "Create BACKUP for OBS",
     "version": "1.0.0",
-    "author": "NAME NAME ?",
-    "website": "https://example.com",
-    "email": "me@example.com"
+    "author": "dimanplus",
+    "website": "https://github.com/dimanplus",
+    "email": "dimanplus@gmail.com"
 }
