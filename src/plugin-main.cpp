@@ -40,6 +40,9 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include "test.hpp"
 
 #include "plugin-support.h"
+#include <qfiledialog.h>
+#include <windows.h>
+#include <shellapi.h>
 
 OBS_DECLARE_MODULE()
 OBS_MODULE_USE_DEFAULT_LOCALE(PLUGIN_NAME, "en-US")
@@ -76,7 +79,8 @@ bool obs_module_load(void)
 		dir.cdUp();
 		dir.cdUp();
 		QString obsPluginsPath = dir.absoluteFilePath("obs-plugins");
-		obs_log(LOG_INFO, "[FU-test-plugin] START_CREATE_BACKUP — obsPluginsPath : %s", obsPluginsPath.toStdString().c_str());
+		obs_log(LOG_INFO, "[FU-test-plugin] START_CREATE_BACKUP — obsPluginsPath : %s",
+			obsPluginsPath.toStdString().c_str());
 
 		if (!QDir(obsPluginsPath).exists()) {
 			obs_log(LOG_ERROR, "[FU-test-plugin] Backup failed: obs-plugins folder not found at %s",
@@ -130,7 +134,8 @@ bool obs_module_load(void)
 			// obs_log(LOG_ERROR, "[FU-test-plugin] PowerShell zip STDERR: %s", stdErr.toStdString().c_str());
 
 			if (zipProcess.exitStatus() == QProcess::NormalExit && zipProcess.exitCode() == 0) {
-				obs_log(LOG_INFO, "[FU-test-plugin] STOP_CREATE_BACKUP — Backup created successfully at: %s",
+				obs_log(LOG_INFO,
+					"[FU-test-plugin] STOP_CREATE_BACKUP — Backup created successfully at: %s",
 					zipPath.toStdString().c_str());
 
 				// Вызов GUI из главного потока - показать сообщение об успешном создании
@@ -153,8 +158,117 @@ bool obs_module_load(void)
 		});
 	});
 
-	QObject::connect(action_Load, &QAction::triggered,
-			 []() { obs_log(LOG_INFO, "Backup -> LOAD Action triggered"); });
+	QObject::connect(action_Load, &QAction::triggered, []() {
+		QString documentsPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+
+		QString filePath = QFileDialog::getOpenFileName(nullptr, obs_module_text("LOAD_BACKUP"), documentsPath,
+								"ZIP Archives (*.zip);;All Files (*)");
+
+		if (filePath.isEmpty()) {
+			obs_log(LOG_INFO, "[FU-test-plugin] No backup file selected");
+			return;
+		}
+
+		QString fileName = QFileInfo(filePath).fileName();
+		obs_log(LOG_INFO, "[FU-test-plugin] START_LOAD_BACKUP — Selected backup file: %s",
+			filePath.toStdString().c_str());
+
+		QMetaObject::invokeMethod(
+			QCoreApplication::instance(),
+			[filePath, fileName]() {
+				QString pluginPath = QCoreApplication::applicationDirPath();
+				QDir dir(pluginPath);
+				dir.cdUp();
+				dir.cdUp();
+				QString obsStudioPath = dir.absolutePath(); // путь до obs-studio (два уровня вверх)
+
+				QString zipPathWin = QDir::toNativeSeparators(filePath);
+				QString destPathWin = QDir::toNativeSeparators(obsStudioPath);
+				QString exePathWin = QDir::toNativeSeparators(QCoreApplication::applicationFilePath());
+
+				QString scriptContent = QString(R"(
+@echo off
+:: Проверка запуска с правами администратора, если нет - перезапускаем с UAC
+net session >nul 2>&1
+if %errorlevel% neq 0 (
+    echo Запуск с правами администратора...
+    powershell -Command "Start-Process '%~f0' -ArgumentList '%1','%2','%3' -Verb runAs"
+    exit /b
+)
+
+echo [WAIT] waiting close OBS...
+:wait_loop
+tasklist | findstr /I "obs64.exe" >nul
+if not errorlevel 1 (
+    timeout /t 1 >nul
+    goto wait_loop
+)
+
+echo [RESTORE] EXTRACT ARCHIVE \n FROM -> "%1" \n TO DIR -> "%2"
+powershell -NoProfile -Command "Expand-Archive -Path '%1' -DestinationPath '%2' -Force"
+
+echo [START] NOW you can LAUNCH OBS... just do it !
+powershell -Command "Add-Type -AssemblyName PresentationFramework;[System.Windows.MessageBox]::Show('SUCCESS','Info',[System.Windows.MessageBoxButton]::OK,[System.Windows.MessageBoxImage]::Information)
+)")
+								.arg(zipPathWin, destPathWin, exePathWin);
+
+				QString scriptPath = QStandardPaths::writableLocation(QStandardPaths::TempLocation) +
+						     "/restore_after_exit.bat";
+
+				QFile scriptFile(scriptPath);
+				if (!scriptFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
+					obs_log(LOG_ERROR, "[FU-test-plugin] Не удалось создать батник по пути %s",
+						scriptPath.toStdString().c_str());
+					QMessageBox::critical(nullptr, "Error",
+							      "Не удалось создать скрипт восстановления.");
+					return;
+				}
+				scriptFile.write(scriptContent.toUtf8());
+				scriptFile.close();
+
+				// Запускаем .bat с правами администратора через ShellExecuteExW
+				wchar_t batPath[MAX_PATH];
+				mbstowcs(batPath, scriptPath.toStdString().c_str(), MAX_PATH);
+
+				SHELLEXECUTEINFOW sei = {sizeof(sei)};
+				sei.cbSize = sizeof(sei);
+				sei.fMask = SEE_MASK_NOCLOSEPROCESS;
+				sei.hwnd = nullptr;
+				sei.lpVerb = L"runas"; // Запуск с правами администратора
+				sei.lpFile = batPath;
+				sei.lpParameters = nullptr;
+				sei.lpDirectory = nullptr;
+				sei.nShow = SW_SHOWNORMAL;
+
+				if (!ShellExecuteExW(&sei)) {
+					DWORD err = GetLastError();
+					obs_log(LOG_ERROR,
+						"[FU-test-plugin] Не удалось запустить bat с правами администратора. Ошибка: %lu",
+						err);
+					QMessageBox::critical(nullptr, "Error",
+							      "Не удалось запустить скрипт с правами администратора.");
+					return;
+				}
+
+				// Показываем окно с предупреждением, что OBS будет закрыта
+				int result = QMessageBox::warning(
+					nullptr, obs_module_text("load_title"),
+					obs_module_text(
+						"obs_will_close_warning"), // Надпись в ресурсах, например "OBS будет закрыта для восстановления из бэкапа. Продолжить?"
+					QMessageBox::Ok | QMessageBox::Cancel);
+
+				if (result == QMessageBox::Ok) {
+					// Закрываем OBS, батник уже запущен и ждёт закрытия OBS
+					QCoreApplication::exit(0);
+				} else {
+					// Пользователь отменил, батник запущен — можно просто завершить (файл будет удалён системой позже)
+					// Либо оставить как есть — батник ждёт закрытия obs64.exe и не выполнится пока OBS не закроют
+					obs_log(LOG_INFO,
+						"[FU-test-plugin] USER cancelled restore, OBS will not be closed.");
+				}
+			},
+			Qt::QueuedConnection);
+	});
 
 	backup_menu->addAction(action_Create);
 	backup_menu->addAction(action_Load);
