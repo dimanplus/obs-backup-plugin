@@ -22,7 +22,7 @@ jobs:
       config: ${{ steps.setup.outputs.config }}
       commitHash: ${{ steps.setup.outputs.commitHash }}
       pluginName: ${{ steps.setup.outputs.pluginName }}
-      pluginVersion: ${{ jobs.check-event.outputs.pluginVersion }}
+      pluginVersion: ${{ steps.setup.outputs.pluginVersion }}
     steps:
       - uses: actions/checkout@v4
         with:
