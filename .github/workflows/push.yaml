@@ -85,7 +85,7 @@ jobs:
           for variant_data in "${variants[@]}"; do
             IFS=';' read -r variant suffix <<< "${variant_data}"
 
-            candidates=(*-${variant}-${commit_hash}/@(*|*-dbgsym).@(${suffix}))
+            candidates=(downloaded-artifacts/*-${variant}-${commit_hash}/@(*|*-dbgsym).@(${suffix}))
 
             for candidate in "${candidates[@]}"; do
               mv "${candidate}" "${root_dir}"
