@@ -59,6 +59,9 @@ A plugin for backing up and restoring OBS plugins, scenes and profiles. Currentl
 ### Usage:
 1. Open OBS
 2. Go to `BACKUP` on Menu Bar
+
+![image](https://github.com/user-attachments/assets/cb6f2b84-4a4d-40a5-85e5-1bb165e79e2b)
+
 3. Select action:
    - "Create BACKUP" - saves current plugins
    - "Load BACKUP" - restores plugins from saved backup
