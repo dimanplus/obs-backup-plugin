@@ -1,4 +1,8 @@
 ## Development Status
+### Build Status
+![Windows Build](https://github.com/your-username/obs-backup-plugin/actions/workflows/build-project.yaml/badge.svg?branch=main)
+[![Release Version](https://img.shields.io/github/v/release/your-username/obs-backup-plugin)](https://github.com/your-username/obs-backup-plugin/releases)
+
 ![Windows Support](https://img.shields.io/badge/Windows-Supported-green)
 ![Linux Support](https://img.shields.io/badge/Linux-Planned-yellow)
 ![macOS Support](https://img.shields.io/badge/macOS-Planned-yellow)
