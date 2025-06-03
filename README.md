@@ -24,8 +24,9 @@
 
 ### Использование:
 1. Откройте OBS
-2. Перейдите в `Резервная копия`
-3. Выберите нужное действие:
+2. Перейдите в `Резервная копия` в строке меню
+![image](https://github.com/user-attachments/assets/b6e90191-63e9-43c9-91ac-c98f360ba6db)
+4. Выберите нужное действие:
    - "Создать резервную копию" - сохранит текущие плагины
    - "Загрузить резервную копию" - восстановит плагины из сохраненной копии
 
@@ -55,7 +56,7 @@ A plugin for backing up and restoring OBS plugins, scenes and profiles. Currentl
 
 ### Usage:
 1. Open OBS
-2. Go to `BACKUP`
+2. Go to `BACKUP` on Menu Bar
 3. Select action:
    - "Create BACKUP" - saves current plugins
    - "Load BACKUP" - restores plugins from saved backup
