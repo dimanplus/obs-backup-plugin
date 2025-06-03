@@ -92,6 +92,9 @@ jobs:
             done
           done
 
+      - name: List files in workspace 🗂️
+        run: ls -lh
+
       - name: Generate Checksums 🪪
         if: fromJSON(steps.check.outputs.validTag)
         run: |
@@ -115,9 +118,9 @@ jobs:
           name: ${{ needs.build-project.outputs.pluginName }} ${{ steps.check.outputs.version }}
           body_path: ${{ github.workspace }}/CHECKSUMS.txt
           files: |
-            ${{ github.workspace }}/*.exe
-            ${{ github.workspace }}/*.zip
-            ${{ github.workspace }}/*.pkg
-            ${{ github.workspace }}/*.deb
-            ${{ github.workspace }}/*.ddeb
-            ${{ github.workspace }}/*.tar.xz
+            *.exe
+            *.zip
+            *.pkg
+            *.deb
+            *.ddeb
+            *.tar.xz
