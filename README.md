@@ -10,7 +10,7 @@
 ### Возможности:
 - ✅ Создание резервной копии папки с плагинами (`obs-plugins`)
 - ✅ Восстановление плагинов из резервной копии
-- 🚧 Поддержка резервирования сцен и профилей (в разработке)
+- 🚧 Поддержка резервирования сцен и профилей (в будущем)
 
 ### Особенности:
 - Работает только на Windows
@@ -18,16 +18,16 @@
 - Простой и интуитивно понятный интерфейс
 
 ### Установка:
-1. Скачайте последнюю версию плагина из [раздела Releases](https://github.com/ваш-репозиторий/releases)
-2. Распакуйте архив в папку `obs-plugins/64bit` вашей установки OBS
+1. Скачайте последнюю версию плагина из [раздела Releases](https://github.com/dimanplus/obs-backup-plugin/releases)
+2. Распакуйте архив в папку `obs-studio` вашей установки OBS (стандартный путь C:\Program Files\obs-studio)
 3. Перезапустите OBS
 
 ### Использование:
 1. Откройте OBS
-2. Перейдите в `Инструменты` → `OBS Backup Plugin`
+2. Перейдите в `Резервная копия`
 3. Выберите нужное действие:
    - "Создать резервную копию" - сохранит текущие плагины
-   - "Восстановить из копии" - восстановит плагины из сохраненной копии
+   - "Загрузить резервную копию" - восстановит плагины из сохраненной копии
 
 </details>
 
@@ -41,7 +41,7 @@ A plugin for backing up and restoring OBS plugins, scenes and profiles. Currentl
 ### Features:
 - ✅ Backup of `obs-plugins` folder
 - ✅ Restore plugins from backup
-- 🚧 Scene and profile backup (in development)
+- 🚧 Scene and profile backup (in future)
 
 ### Notes:
 - Windows only
@@ -50,15 +50,15 @@ A plugin for backing up and restoring OBS plugins, scenes and profiles. Currentl
 
 ### Installation:
 1. Download the latest version from [Releases section](https://github.com/your-repository/releases)
-2. Extract to `obs-plugins/64bit` folder of your OBS installation
+2. Extract to `obs-studio` folder of your OBS installation (default path C:\Program Files\obs-studio)
 3. Restart OBS
 
 ### Usage:
 1. Open OBS
-2. Go to `Tools` → `OBS Backup Plugin`
+2. Go to `BACKUP`
 3. Select action:
-   - "Create Backup" - saves current plugins
-   - "Restore Backup" - restores plugins from saved backup
+   - "Create BACKUP" - saves current plugins
+   - "Load BACKUP" - restores plugins from saved backup
 
 </details>
 
