@@ -1,6 +1,6 @@
 /*
-Plugin Name
-Copyright (C) <Year> <Developer> <Email Address>
+obs-backup-plugin
+Copyright (C) <2025> <https://github.com/dimanplus>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -84,7 +84,8 @@ bool obs_module_load(void)
 			obsPluginsPath.toStdString().c_str());
 
 		if (!QDir(obsPluginsPath).exists()) {
-			obs_log(LOG_ERROR, "[FU-test-plugin] Backup failed: obs-plugins folder not found at %s",
+			obs_log(LOG_ERROR, "[%s] Backup failed: obs-plugins folder not found at %s",
+                PLUGIN_NAME,
 				obsPluginsPath.toStdString().c_str());
 			return;
 		}
@@ -116,7 +117,8 @@ bool obs_module_load(void)
 
 			if (!QDir(tempObsPluginsCopyPath).exists()) {
 				obs_log(LOG_ERROR,
-					"[FU-test-plugin] Backup failed: could not copy obs-plugins to temp");
+					"[%s] Backup failed: could not copy obs-plugins to temp",
+                    PLUGIN_NAME);
 				return;
 			}
 
@@ -131,12 +133,13 @@ bool obs_module_load(void)
 			QString stdOut = zipProcess.readAllStandardOutput();
 			QString stdErr = zipProcess.readAllStandardError();
 
-			// obs_log(LOG_INFO, "[FU-test-plugin] PowerShell zip STDOUT: %s", stdOut.toStdString().c_str());
-			// obs_log(LOG_ERROR, "[FU-test-plugin] PowerShell zip STDERR: %s", stdErr.toStdString().c_str());
+			// obs_log(LOG_INFO, "[%s PowerShell zip STDOUT: %s", PLUGIN_NAME, stdOut.toStdString().c_str());
+			// obs_log(LOG_ERROR, "[%s] PowerShell zip STDERR: %s", PLUGIN_NAME, stdErr.toStdString().c_str());
 
 			if (zipProcess.exitStatus() == QProcess::NormalExit && zipProcess.exitCode() == 0) {
 				obs_log(LOG_INFO,
-					"[FU-test-plugin] STOP_CREATE_BACKUP — Backup created successfully at: %s",
+					"[%s] STOP_CREATE_BACKUP — Backup created successfully at: %s",
+                    PLUGIN_NAME,
 					zipPath.toStdString().c_str());
 
 				// Вызов GUI из главного потока - показать сообщение об успешном создании
@@ -151,7 +154,8 @@ bool obs_module_load(void)
 					Qt::QueuedConnection);
 
 			} else {
-				obs_log(LOG_ERROR, "[FU-test-plugin] Backup creation failed");
+				obs_log(LOG_ERROR, "[%s] Backup creation failed",
+                PLUGIN_NAME);
 			}
 
 			// Очистка временной копии
@@ -166,12 +170,14 @@ bool obs_module_load(void)
 								"ZIP Archives (*.zip);;All Files (*)");
 
 		if (filePath.isEmpty()) {
-			obs_log(LOG_INFO, "[FU-test-plugin] No backup file selected");
+			obs_log(LOG_INFO, "[%s] No backup file selected",
+            PLUGIN_NAME);
 			return;
 		}
 
 		QString fileName = QFileInfo(filePath).fileName();
-		obs_log(LOG_INFO, "[FU-test-plugin] START_LOAD_BACKUP — Selected backup file: %s",
+		obs_log(LOG_INFO, "[%s] START_LOAD_BACKUP — Selected backup file: %s",
+            PLUGIN_NAME,
 			filePath.toStdString().c_str());
 
 		QMetaObject::invokeMethod(
@@ -218,7 +224,8 @@ powershell -Command "Add-Type -AssemblyName PresentationFramework;[System.Window
 
 				QFile scriptFile(scriptPath);
 				if (!scriptFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
-					obs_log(LOG_ERROR, "[FU-test-plugin] Не удалось создать батник по пути %s",
+					obs_log(LOG_ERROR, "[%s] Не удалось создать батник по пути %s",
+                        PLUGIN_NAME,
 						scriptPath.toStdString().c_str());
 					QMessageBox::critical(nullptr, "Error",
 							      "Не удалось создать скрипт восстановления.");
@@ -244,7 +251,8 @@ powershell -Command "Add-Type -AssemblyName PresentationFramework;[System.Window
 				if (!ShellExecuteExW(&sei)) {
 					DWORD err = GetLastError();
 					obs_log(LOG_ERROR,
-						"[FU-test-plugin] Не удалось запустить bat с правами администратора. Ошибка: %lu",
+						"[%s] Не удалось запустить bat с правами администратора. Ошибка: %lu",
+                        PLUGIN_NAME,
 						err);
 					QMessageBox::critical(nullptr, "Error",
 							      "Не удалось запустить скрипт с правами администратора.");
@@ -265,7 +273,8 @@ powershell -Command "Add-Type -AssemblyName PresentationFramework;[System.Window
 					// Пользователь отменил, батник запущен — можно просто завершить (файл будет удалён системой позже)
 					// Либо оставить как есть — батник ждёт закрытия obs64.exe и не выполнится пока OBS не закроют
 					obs_log(LOG_INFO,
-						"[FU-test-plugin] USER cancelled restore, OBS will not be closed.");
+						"[%s] USER cancelled restore, OBS will not be closed.", 
+                        PLUGIN_NAME);
 				}
 			},
 			Qt::QueuedConnection);
