@@ -30,7 +30,7 @@
 
 ### Использование:
 1. Откройте OBS
-2. Перейдите в `Резервная копия` в строке меню 
+2. Перейдите в `Резервная копия` в строке меню (там где Файл...Вид, Профиль... Справка...)
 
 ![image](https://github.com/user-attachments/assets/b6e90191-63e9-43c9-91ac-c98f360ba6db)
 
@@ -58,7 +58,7 @@ A plugin for backing up and restoring OBS plugins, scenes and profiles. Currentl
 - Simple and intuitive interface
 
 ### Installation:
-1. Download the latest version from [Releases section](https://github.com/your-repository/releases)
+1. Download the latest version from [Releases section](https://github.com/dimanplus/obs-backup-plugin/releases)
 2. Extract to `obs-studio` folder of your OBS installation (default path C:\Program Files\obs-studio)
 3. Restart OBS
 
