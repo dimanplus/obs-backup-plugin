@@ -10,6 +10,7 @@ on:
       - "*"
 permissions:
   contents: write
+
 jobs:
   check-format:
     name: Check Formatting 🔍
@@ -24,6 +25,9 @@ jobs:
     secrets: inherit
     permissions:
       contents: read
+    outputs:
+      pluginName: ${{ jobs.windows-build.outputs.pluginName }}
+      pluginVersion: ${{ jobs.windows-build.outputs.pluginVersion }}
 
   create-release:
     name: Create Release 🛫
@@ -59,7 +63,7 @@ jobs:
         uses: actions/download-artifact@v4
         if: fromJSON(steps.check.outputs.validTag)
         with:
-          pattern: FU-backup-plugin-*
+          pattern: ${{ needs.build-project.outputs.pluginName }}-*
           path: ./downloaded-artifacts
         id: download
 
