@@ -37,7 +37,7 @@
 3. Выберите нужное действие:
    - "Создать резервную копию" - сохранит текущие плагины
    - "Загрузить резервную копию" - восстановит плагины из сохраненной копии
-      :point_right: ***ВАЖНО*** - перед Загрузкой обязательно закройте Google Chrome, так как он может использовать некоторые файлы из папки `obs-studio/data` :+1:
+      - :point_right: ***ВАЖНО*** - перед Загрузкой обязательно закройте Google Chrome, так как он может использовать некоторые файлы из папки `obs-studio/data` :+1:
 4. ***ОБЯЗАТЕЛЬНО*** дождаться окна подтверждения, оно будет после выполнения любого из выбранных действий
 
 </details>
@@ -73,7 +73,7 @@ A plugin for backing up and restoring OBS plugins, scenes and profiles. Currentl
 3. Select action:
    - "Create BACKUP" - saves current plugins
    - "Load BACKUP" - restores plugins from saved backup
-      :point_right: ***IMPORTANT*** - Before restores, be sure to close Google Chrome, as it may use some files from the `obs-studio/data` folder :+1:
+      - :point_right: ***IMPORTANT*** - Before restores, be sure to close Google Chrome, as it may use some files from the `obs-studio/data` folder :+1:
 4. You ***MUST*** wait for the confirmation window, it will appear after performing any of the selected actions
    
 </details>
