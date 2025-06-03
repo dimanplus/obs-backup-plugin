@@ -1,3 +1,8 @@
+## Development Status
+![Windows Support](https://img.shields.io/badge/Windows-Supported-green)
+![Linux Support](https://img.shields.io/badge/Linux-Planned-yellow)
+![macOS Support](https://img.shields.io/badge/macOS-Planned-yellow)
+
 # OBS Backup Plugin
 
 <details>
@@ -67,11 +72,6 @@ A plugin for backing up and restoring OBS plugins, scenes and profiles. Currentl
    - "Load BACKUP" - restores plugins from saved backup
 
 </details>
-
-## Development Status
-![Windows Support](https://img.shields.io/badge/Windows-Supported-green)
-![Linux Support](https://img.shields.io/badge/Linux-Planned-yellow)
-![macOS Support](https://img.shields.io/badge/macOS-Planned-yellow)
 
 ## License
 MIT License - see [LICENSE](LICENSE) file for details
