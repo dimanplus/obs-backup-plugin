@@ -1,5 +1,5 @@
 ## Development Status
-![Release Workflow](https://github.com/dimanplus/obs-backup-plugin/actions/workflows/push.yaml/badge.svg?branch=main)
+[![Push](https://github.com/dimanplus/obs-backup-plugin/actions/workflows/push.yaml/badge.svg)](https://github.com/dimanplus/obs-backup-plugin/actions/workflows/push.yaml)
 ![Windows Support](https://img.shields.io/badge/Windows-Supported-green)
 ![Linux Support](https://img.shields.io/badge/Linux-Planned-yellow)
 ![macOS Support](https://img.shields.io/badge/macOS-Planned-yellow)
